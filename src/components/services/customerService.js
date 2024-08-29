@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { handleApiError } from '../utils/handleApiError';
 
 // Use environment variables for API URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8082/api/customers';
@@ -25,8 +26,9 @@ export const fetchCustomerById = async (id) => {
     const response = await axios.get(`${API_URL}/${id}`, config);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch customer by ID:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = handleApiError(error);
+    console.error('Failed to fetch customer by ID:', errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -42,15 +44,16 @@ export const fetchCustomers = async ({ page = 0, pageSize = 10, sortField = 'id'
         page,
         size: pageSize,
         sort: `${sortField},${sortOrder}`,
-        ...(firstName && { firstName }),  // Only include firstName if it is not an empty string
+        ...(firstName && { firstName }), 
       },
     };
 
     const response = await axios.get(`${API_URL}/search`, config);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch customers:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = handleApiError(error);
+    console.error('Failed to fetch customers:', errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -66,8 +69,9 @@ export const updateCustomer = async (id, customerData) => {
     const response = await axios.put(`${API_URL}/${id}`, customerData, config);
     return response.data;
   } catch (error) {
-    console.error('Failed to update customer:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = handleApiError(error);
+    console.error('Failed to update customer:', errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -84,7 +88,8 @@ export const createCustomer = async (customerData) => {
     const response = await axios.post(API_URL, customerData, config);
     return response.data;
   } catch (error) {
-    console.error('Failed to create customer:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = handleApiError(error);
+    console.error('Failed to create customer:', errorMessage);
+    throw new Error(errorMessage);
   }
 };

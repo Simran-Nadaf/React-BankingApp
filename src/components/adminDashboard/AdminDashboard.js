@@ -4,7 +4,7 @@ import Table from '../sharedcomponents/Table';
 import Filter from '../sharedcomponents/Filter';
 import CustomerUpdateForm from './CustomerUpdateForm';
 import PageSize from '../sharedcomponents/PageSize';
-import Pagination from '../sharedcomponents/Pagination';
+import Pagination from '../sharedcomponents/CustomPagination';
 import debounce from 'lodash.debounce';
 import { ToastContainer, toast } from 'react-toastify';
 import { Modal, Spinner } from 'react-bootstrap';

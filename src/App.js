@@ -5,6 +5,8 @@ import MainDashboard from './components/adminDashboard/MainDashboard';
 import CustomerManagement from './components/adminDashboard/CustomerManagement';
 import AccountManagement from './components/adminDashboard/AccountManagement';
 import TransactionManagement from './components/adminDashboard/TransactionManagement';
+import UserDashboard from './components/userDashboard/UserDashboard';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import { ToastContainer } from 'react-toastify';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -12,25 +14,35 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Route for the login page */}
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        
+        {/* Protected routes for admin access */}
+        <Route
+          path="/admin/dashboard"
+          element={<ProtectedRoute element={MainDashboard} />}
+        />
+        <Route
+          path="/admin/customers"
+          element={<ProtectedRoute element={CustomerManagement} />}
+        />
+        <Route
+          path="/admin/accounts"
+          element={<ProtectedRoute element={AccountManagement} />}
+        />
+        <Route
+          path="/admin/transactions"
+          element={<ProtectedRoute element={TransactionManagement} />}
+        />
 
-        {/* Route for the main dashboard after login */}
-        <Route path="/admin/dashboard" element={<MainDashboard />} />
+        {/* Protected routes for user access */}
+        <Route
+          path="/user/dashboard"
+          element={<ProtectedRoute element={UserDashboard} />}
+        />
 
-        {/* Route for customer management */}
-        <Route path="/admin/customers" element={<CustomerManagement />} />
-
-        {/* Route for account management */}
-        <Route path="/admin/accounts" element={<AccountManagement />} />
-
-        {/* Route for transaction management */}
-        <Route path="/admin/transactions" element={<TransactionManagement />} />
-
-        {/* Redirect to main dashboard if no route matches */}
-        <Route path="*" element={<MainDashboard />} />
+        {/* Default route */}
+        <Route path="*" element={<Login />} />
       </Routes>
-      {/* Toast notifications container */}
       <ToastContainer />
     </Router>
   );

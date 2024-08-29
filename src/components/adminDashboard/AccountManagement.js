@@ -1,41 +1,82 @@
-// AccountManagement.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   fetchAllAccounts,
-  fetchAccountById,
   createAccount,
-  updateAccount,
   deleteAccount,
+  fetchAccountById
 } from '../services/accountService';
 import AccountTable from './AccountTable';
 import AccountForm from './AccountForm';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Spinner, Modal } from 'react-bootstrap';
+import { Spinner } from 'react-bootstrap';
+import CustomPagination from '../sharedcomponents/CustomPagination';
+import CustomModal from '../sharedcomponents/CustomModal';
+import { useNavigate, useLocation } from 'react-router-dom';
+import debounce from 'lodash.debounce';
 
 const AccountManagement = () => {
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchId, setSearchId] = useState('');
 
-  // Load all accounts on component mount
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Initialize state from URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id') || '';
+    const page = Number(params.get('page')) || 1;
+    const size = Number(params.get('size')) || 10;
+
+    setSearchId(id);
+    setCurrentPage(page);
+    setPageSize(size);
+  }, [location.search]);
+
   useEffect(() => {
     loadAccounts();
-  }, []);
+  }, [currentPage, pageSize, searchId]);
+
+  const debouncedLoadAccounts = useCallback(
+    debounce(() => {
+      loadAccounts();
+    }, 300),
+    [searchId, currentPage, pageSize]
+  );
 
   const loadAccounts = async () => {
     setLoading(true);
     try {
-      const data = await fetchAllAccounts();
-      setAccounts(data);
+      if (searchId) {
+        // Fetch a single account by ID if searchId is provided
+        const account = await fetchAccountById(searchId);
+        setAccounts([account]);
+        setTotalPages(1);
+      } else {
+        // Fetch all accounts if no searchId is provided
+        const response = await fetchAllAccounts(currentPage, pageSize);
+        setAccounts(response.data);
+        setTotalPages(response.totalPages);
+      }
     } catch (error) {
       toast.error('Failed to load accounts.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    debouncedLoadAccounts();
+    return () => {
+      debouncedLoadAccounts.cancel();
+    };
+  }, [debouncedLoadAccounts]);
 
   const handleCreateAccount = async (accountData) => {
     try {
@@ -47,38 +88,6 @@ const AccountManagement = () => {
       toast.error('Failed to create account.');
     }
   };
-
-  const handleUpdateAccount = async (accountData) => {
-    // Check if accountData is provided and if it contains a valid id
-    if (!accountData) {
-      console.error('Invalid account data provided:', accountData);
-      toast.error('Invalid account data.');
-      return;
-    }
-  
-    if (!accountData.id) {
-      console.error('Account data is missing an id:', accountData);
-      toast.error('Account ID is missing.');
-      return;
-    }
-  
-    try {
-      const updatedAccount = await updateAccount(accountData.id, accountData);
-      setAccounts((prevAccounts) =>
-        prevAccounts.map((account) =>
-          account.id === updatedAccount.id ? updatedAccount : account
-        )
-      );
-      toast.success('Account updated successfully!');
-      setShowModal(false);
-      setIsEditing(false);
-      setSelectedAccount(null);
-    } catch (error) {
-      console.error('Failed to update account:', error.response?.data || error.message);
-      toast.error(`Failed to update account: ${error.response?.data?.message || error.message}`);
-    }
-  };
-  
 
   const handleDeleteAccount = async (id) => {
     try {
@@ -92,50 +101,92 @@ const AccountManagement = () => {
     }
   };
 
-  const handleEditClick = (account) => {
-    setSelectedAccount(account);
-    setIsEditing(true);
-    setShowModal(true);
+  const handleSearchIdChange = (e) => {
+    const id = e.target.value;
+    setSearchId(id);
+    updateURLParams({ id });
   };
 
   const handleCreateClick = () => {
-    setSelectedAccount(null);
-    setIsEditing(false);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedAccount(null);
+  };
+
+  const handleBackClick = () => {
+    navigate('/admin/dashboard');
+  };
+
+  const updateURLParams = (newParams) => {
+    const params = new URLSearchParams(location.search);
+    Object.keys(newParams).forEach(key => {
+      if (newParams[key]) {
+        params.set(key, newParams[key]);
+      } else {
+        params.delete(key);
+      }
+    });
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
   };
 
   return (
-    <div>
-      <h1>Account Management</h1>
-      <button onClick={handleCreateClick} className="btn btn-primary mb-3">
-        Create Account
-      </button>
+    <div className="container py-5">
+      <h1 className="text-center mb-4">Account Management</h1>
+      <div className="mb-4">
+        <div className="row">
+          <div className="col-md-4 mb-3">
+            <input
+              type="text"
+              value={searchId}
+              onChange={handleSearchIdChange}
+              placeholder="Search by ID"
+              className="form-control"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <button onClick={handleBackClick} className="btn btn-secondary">
+          Back to Dashboard
+        </button>
+        <button onClick={handleCreateClick} className="btn btn-primary">
+          Create Account
+        </button>
+      </div>
       {loading ? (
-        <Spinner animation="border" />
+        <div className="d-flex justify-content-center">
+          <Spinner animation="border" />
+        </div>
       ) : (
-        <AccountTable
-          accounts={accounts}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteAccount}
-        />
-      )}
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>{isEditing ? 'Edit Account' : 'Create Account'}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <AccountForm
-            account={selectedAccount}
-            onSave={isEditing ? handleUpdateAccount : handleCreateAccount}
-            onClose={handleCloseModal}
+        <>
+          <AccountTable
+            accounts={accounts}
+            onDelete={handleDeleteAccount}
           />
-        </Modal.Body>
-      </Modal>
+          <CustomPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              updateURLParams({ page });
+            }}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1); // Reset to first page on page size change
+              updateURLParams({ size, page: 1 });
+            }}
+            pageSize={pageSize}
+          />
+        </>
+      )}
+      <CustomModal show={showModal} onHide={handleCloseModal} title="Create Account">
+        <AccountForm
+          onSave={handleCreateAccount}
+          onClose={handleCloseModal}
+        />
+      </CustomModal>
       <ToastContainer />
     </div>
   );

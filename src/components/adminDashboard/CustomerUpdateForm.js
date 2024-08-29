@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Alert } from 'react-bootstrap';
 import { fetchCustomerById } from '../services/customerService';
 
 const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
@@ -9,6 +9,7 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
     email: '',
     isActive: true,
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -23,6 +24,19 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
     loadCustomer();
   }, [customerId]);
 
+  const validate = () => {
+    const newErrors = {};
+    if (!customerData.firstName) newErrors.firstName = 'First Name is required.';
+    if (!customerData.lastName) newErrors.lastName = 'Last Name is required.';
+    if (!customerData.email) {
+      newErrors.email = 'Email is required.';
+    } else if (!/\S+@\S+\.\S+/.test(customerData.email)) {
+      newErrors.email = 'Email is invalid.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCustomerData((prevData) => ({
@@ -33,11 +47,20 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onUpdate(customerData);
+    if (validate()) {
+      onUpdate(customerData);
+    }
   };
 
   return (
     <Form onSubmit={handleSubmit}>
+      {Object.keys(errors).length > 0 && (
+        <Alert variant="danger">
+          {Object.values(errors).map((error, index) => (
+            <div key={index}>{error}</div>
+          ))}
+        </Alert>
+      )}
       <Form.Group controlId="firstName">
         <Form.Label>First Name</Form.Label>
         <Form.Control
@@ -45,8 +68,11 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
           name="firstName"
           value={customerData.firstName}
           onChange={handleChange}
-          required
+          isInvalid={!!errors.firstName}
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.firstName}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group controlId="lastName">
         <Form.Label>Last Name</Form.Label>
@@ -55,8 +81,11 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
           name="lastName"
           value={customerData.lastName}
           onChange={handleChange}
-          required
+          isInvalid={!!errors.lastName}
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.lastName}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group controlId="email">
         <Form.Label>Email</Form.Label>
@@ -65,8 +94,11 @@ const CustomerUpdateForm = ({ customerId, onUpdate, onClose }) => {
           name="email"
           value={customerData.email}
           onChange={handleChange}
-          required
+          isInvalid={!!errors.email}
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.email}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group controlId="isActive">
         <Form.Check

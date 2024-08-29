@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card, Row, Col, Container, Button, Navbar, Nav, Spinner } from 'react-bootstrap';
+import { ToastContainer, toast } from 'react-toastify';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css'; // Import Toastify CSS
 import './MainDashboard.css'; // Ensure this file has the necessary styling enhancements
 
 const MainDashboard = () => {
@@ -17,9 +19,24 @@ const MainDashboard = () => {
     // Clear user session or authentication token here
     localStorage.clear(); // Example: clear local storage
     setIsLoading(true); // Set loading state to true
-    navigate('/login'); // Navigate to the login page after logout
+
+    // Show a toast notification
+    toast.info('You have been logged out successfully.');
+
+    // Simulate a short delay before navigating to ensure the loading spinner appears
+    setTimeout(() => {
+      navigate('/login'); // Navigate to the login page after logout
+      setIsLoading(false); // Reset loading state
+    }, 500);
   };
 
+  const handleBackClick = () => {
+    // Show a toast notification when navigating back
+    toast.info('Returning to Dashboard...');
+
+    // Navigate to the dashboard
+    navigate('/admin/dashboard');
+  };
   return (
     <>
       {/* Navigation Bar */}
@@ -128,6 +145,7 @@ const MainDashboard = () => {
           )}
         </Row>
       </Container>
+      <ToastContainer /> {/* Include ToastContainer to display toasts */}
     </>
   );
 };

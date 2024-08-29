@@ -1,4 +1,3 @@
-// AccountTable.js
 import React from 'react';
 import { Table, Button } from 'react-bootstrap';
 
@@ -27,9 +26,9 @@ const AccountTable = ({ accounts, onEdit, onDelete }) => {
               <td>{account.bankId}</td>
               <td>{account.active ? 'Active' : 'Inactive'}</td>
               <td>
-                <Button variant="warning" onClick={() => onEdit(account)}>
+                {/* <Button variant="warning" onClick={() => onEdit(account)}>
                   Edit
-                </Button>{' '}
+                </Button>{' '} */}
                 <Button variant="danger" onClick={() => onDelete(account.id)}>
                   Delete
                 </Button>

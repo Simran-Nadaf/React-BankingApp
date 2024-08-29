@@ -1,19 +1,26 @@
 import React from 'react';
-import { Form } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
-const PageSize = ({ pageSize, onPageSizeChange }) => (
-  <Form.Group controlId="pageSize">
-    <Form.Label>Items per page</Form.Label>
-    <Form.Control
-      as="select"
-      value={pageSize}
-      onChange={(e) => onPageSizeChange(parseInt(e.target.value, 10))}
-    >
-      <option value={5}>5</option>
-      <option value={10}>10</option>
-      <option value={20}>20</option>
-    </Form.Control>
-  </Form.Group>
-);
+const PageSize = ({ pageSize, onPageSizeChange }) => {
+  const handleSizeChange = (e) => {
+    onPageSizeChange(Number(e.target.value));
+  };
+
+  return (
+    <div>
+      <label htmlFor="pageSize">Items per page: </label>
+      <select id="pageSize" value={pageSize} onChange={handleSizeChange}>
+        <option value={10}>10</option>
+        <option value={20}>20</option>
+        <option value={50}>50</option>
+      </select>
+    </div>
+  );
+};
+
+PageSize.propTypes = {
+  pageSize: PropTypes.number.isRequired,
+  onPageSizeChange: PropTypes.func.isRequired,
+};
 
 export default PageSize;

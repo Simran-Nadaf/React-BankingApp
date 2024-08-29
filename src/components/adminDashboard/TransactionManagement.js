@@ -2,15 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   fetchAllTransactions,
   fetchTransactionById,
-  fetchTransactionsByDateRange,
   getPassbook,
 } from '../services/transactionService';
 import TransactionTable from './TransactionTable';
-import Filter from '../sharedcomponents/Filter';
 import PageSize from '../sharedcomponents/PageSize';
-import Pagination from '../sharedcomponents/Pagination';
+import Pagination from '../sharedcomponents/CustomPagination';
 import debounce from 'lodash.debounce';
 import { ToastContainer, toast } from 'react-toastify';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Modal, Spinner } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,36 +22,45 @@ const TransactionManagement = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [searchId, setSearchId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const [accountId, setAccountId] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation(); // Hook to access the location object
+
+  useEffect(() => {
+    // Initialize search params from URL
+    const searchParams = new URLSearchParams(location.search);
+    const idFromParams = searchParams.get('searchId');
+    const accountFromParams = searchParams.get('accountId');
+
+    if (idFromParams) {
+      setSearchId(idFromParams);
+      loadTransactionById(idFromParams); // Load data based on the search ID
+    }
+
+    if (accountFromParams) {
+      setAccountId(accountFromParams);
+      loadPassbook(accountFromParams); // Load data based on the account ID
+    }
+  }, [location.search]);
 
   const debouncedLoadTransactions = useCallback(
     debounce(() => {
       loadTransactions();
     }, 300),
-    [searchId, startDate, endDate, currentPage, pageSize]
+    [searchId, currentPage, pageSize]
   );
 
   const loadTransactions = async () => {
     try {
       setLoading(true);
-      setError(null); // Clear any previous errors
+      setError(null);
       let data, totalPages;
+
       if (searchId) {
-        // Fetch by ID if searchId is present
         const response = await fetchTransactionById(searchId);
         setTransactions(response ? [response] : []);
         setTotalPages(1);
-      } else if (startDate && endDate) {
-        // Fetch by date range if dates are provided
-        const response = await fetchTransactionsByDateRange(startDate, endDate, currentPage - 1, pageSize);
-        data = response.data;
-        totalPages = response.totalPages;
-        setTransactions(data);
-        setTotalPages(totalPages);
       } else {
-        // Fetch all transactions otherwise
         const response = await fetchAllTransactions(currentPage - 1, pageSize);
         data = response.data;
         totalPages = response.totalPages;
@@ -68,29 +76,30 @@ const TransactionManagement = () => {
     }
   };
 
-  useEffect(() => {
-    debouncedLoadTransactions();
-    return () => {
-      debouncedLoadTransactions.cancel();
-    };
-  }, [debouncedLoadTransactions]);
-
-  const handleSearchById = () => {
-    debouncedLoadTransactions();
+  const loadTransactionById = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetchTransactionById(id);
+      setTransactions(response ? [response] : []);
+      setTotalPages(1);
+    } catch (error) {
+      console.error('Error fetching transaction by ID:', error);
+      setError('Error fetching transaction by ID.');
+      toast.error('Failed to load transaction.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleFetchTransactionsByDateRange = () => {
-    debouncedLoadTransactions();
-  };
-
-  const handlePassbook = async () => {
-    if (accountId) {
+  const loadPassbook = async (id = accountId) => {
+    if (id) {
       setLoading(true);
       setError(null);
       try {
-        const response = await getPassbook(accountId, startDate, endDate);
+        const response = await getPassbook(id);
         setTransactions(response);
-        setTotalPages(1);
+        setTotalPages(1); // Assuming passbook has no pagination
       } catch (error) {
         console.error('Error fetching passbook:', error);
         setError('Error fetching passbook.');
@@ -99,6 +108,23 @@ const TransactionManagement = () => {
         setLoading(false);
       }
     }
+  };
+
+  useEffect(() => {
+    if (!searchId) debouncedLoadTransactions();
+    return () => {
+      debouncedLoadTransactions.cancel();
+    };
+  }, [debouncedLoadTransactions, searchId]);
+
+  const handleSearchById = () => {
+    navigate(`?searchId=${searchId}`); // Update the URL with the searchId
+    loadTransactionById(searchId); // Fetch transaction by ID
+  };
+
+  const handlePassbook = () => {
+    navigate(`?accountId=${accountId}`); // Update the URL with the accountId
+    loadPassbook(); // Fetch passbook
   };
 
   const handlePageSizeChange = (newSize) => {
@@ -110,12 +136,19 @@ const TransactionManagement = () => {
     setCurrentPage(page);
   };
 
+  const handleBackClick = () => {
+    navigate('/admin/dashboard');
+  };
+
   if (loading) return <div className="text-center"><Spinner animation="border" /></div>;
   if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
     <div className="container">
       <h1 className="text-center">Transaction Management</h1>
+      <button className="btn btn-secondary mb-3" onClick={handleBackClick}>
+        Back to Dashboard
+      </button>
       <div className="mb-4">
         <div className="row">
           <div className="col-md-4 mb-3">
@@ -127,21 +160,6 @@ const TransactionManagement = () => {
               className="form-control"
             />
             <button className="btn btn-primary mt-2" onClick={handleSearchById}>Search</button>
-          </div>
-          <div className="col-md-4 mb-3">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="form-control"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="form-control mt-2"
-            />
-            <button className="btn btn-primary mt-2" onClick={handleFetchTransactionsByDateRange}>Filter by Date Range</button>
           </div>
           <div className="col-md-4 mb-3">
             <input
@@ -167,7 +185,7 @@ const TransactionManagement = () => {
         />
         <Pagination
           currentPage={currentPage}
-          totalItems={totalPages * pageSize} // Assuming totalPages and pageSize together give total count
+          totalItems={totalPages * pageSize}
           itemsPerPage={pageSize}
           onPageChange={handlePageChange}
         />

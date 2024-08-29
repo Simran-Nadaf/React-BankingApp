@@ -1,73 +1,49 @@
-/* Login.css */
-
-/* Full height container */
+/* Center the card vertically and horizontally */
 .login-container {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
+    background-color: #f7f7f7;
+    padding: 15px;
   }
   
-  /* Image section styling */
-  .login-image {
-    flex: 1;
-    background: url('../../assets/images/login-background.webp') no-repeat center center;
-    background-size: 70%; /* Ensures the image covers the area */
-  }
-  
-  /* Card section styling */
-  .login-card {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: white;
-  }
-  
-  /* Card styling */
+  /* Card shadow effect */
   .card {
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
-    padding: 2rem;
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
-  /* Heading styling */
-  h2 {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 1.5rem;
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   }
   
-  /* Form group styling */
-  .form-group {
-    margin-bottom: 1rem;
+  /* Button hover effect */
+  .login-btn {
+    background-color: #007bff;
+    border-color: #007bff;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   
-  .form-group label {
-    font-weight: bold;
-  }
-  
-  /* Input styling */
-  .form-control {
-    border-radius: 4px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ced4da;
-  }
-  
-  /* Button styling */
-  .btn-primary {
-    background-color: #0072ff;
-    border-color: #0072ff;
-    border-radius: 4px;
-    padding: 0.75rem 1.25rem;
-    font-size: 1rem;
-  }
-  
-  .btn-primary:hover {
+  .login-btn:hover {
     background-color: #0056b3;
-    border-color: #004494;
+    border-color: #0056b3;
+  }
+  
+  /* Form input styles */
+  .form-control {
+    border-radius: 5px;
+  }
+  
+  /* Error message styling */
+  .alert {
+    border-radius: 5px;
+  }
+  
+  /* Image styling as a background */
+  .login-image {
+    background-image: url('../../assets/images/bank-login.jpg'); /* Adjust path to your image */
+    height: 100%;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 15px 0 0 15px;
   }
   
